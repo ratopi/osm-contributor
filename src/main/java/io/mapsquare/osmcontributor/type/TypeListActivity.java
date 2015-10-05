@@ -24,8 +24,11 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,6 +42,7 @@ import android.widget.TextView;
 import android.widget.ViewSwitcher;
 
 import java.util.Collection;
+import java.util.List;
 
 import javax.inject.Inject;
 
@@ -52,8 +56,9 @@ import io.mapsquare.osmcontributor.core.events.PleaseLoadPoiTypes;
 import io.mapsquare.osmcontributor.core.model.PoiType;
 import io.mapsquare.osmcontributor.core.model.PoiTypeTag;
 import io.mapsquare.osmcontributor.map.BitmapHandler;
-import io.mapsquare.osmcontributor.type.adapter.PoiTypeAdapter;
+import io.mapsquare.osmcontributor.type.adapter.FavoriteContactAdapter;
 import io.mapsquare.osmcontributor.type.adapter.PoiTypeTagAdapter;
+import io.mapsquare.osmcontributor.type.dto.SuggestionsData;
 import timber.log.Timber;
 
 public class TypeListActivity extends AppCompatActivity {
@@ -89,16 +94,13 @@ public class TypeListActivity extends AppCompatActivity {
 
     private boolean showingTypes = true;
 
-    private DragSwipeRecyclerHelper typesHelper;
-    private PoiTypeAdapter typesAdapter;
+    private FavoriteContactAdapter typesAdapter;
 
     private DragSwipeRecyclerHelper tagsHelper;
     private PoiTypeTagAdapter tagsAdapter;
 
-
     private MenuItem mSearchAction;
     private boolean isSearchOpened = false;
-    private EditText edtSeach;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -116,8 +118,10 @@ public class TypeListActivity extends AppCompatActivity {
 
         presenter = new TypeListActivityPresenter(this, savedInstanceState);
 
-        typesAdapter = new PoiTypeAdapter(presenter.getListTypesCallback(), bitmapHandler);
-        typesHelper = new DragSwipeRecyclerHelper(recyclerTypes, typesAdapter);
+        typesAdapter = new FavoriteContactAdapter(this, bitmapHandler);
+        recyclerTypes.setLayoutManager(new LinearLayoutManager(this));
+        recyclerTypes.addItemDecoration(new ItemDividerDecoration(this));
+        recyclerTypes.setAdapter(typesAdapter);
 
         tagsAdapter = new PoiTypeTagAdapter(presenter.getListTagsCallback());
         tagsHelper = new DragSwipeRecyclerHelper(recyclerTags, tagsAdapter);
@@ -133,7 +137,6 @@ public class TypeListActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        typesHelper.onPause();
         tagsHelper.onPause();
         presenter.onPause();
         super.onPause();
@@ -141,7 +144,6 @@ public class TypeListActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        typesHelper.onDestroy();
         tagsHelper.onDestroy();
         super.onDestroy();
     }
@@ -167,7 +169,9 @@ public class TypeListActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if (!presenter.onBackPressed()) {
+        if (isSearchOpened) {
+            handleMenuSearch();
+        } else if (!presenter.onBackPressed()) {
             eventBus.post(new PleaseLoadPoiTypes());
             super.onBackPressed();
         }
@@ -186,7 +190,7 @@ public class TypeListActivity extends AppCompatActivity {
     void showTypes(Collection<PoiType> poiTypes) {
         showingTypes = true;
 
-        typesAdapter.clearAndAddAll(poiTypes);
+        typesAdapter.setTypes(poiTypes);
         changeTitle(R.string.manage_poi_types, null);
         showContent();
         listSwitcher.showView(recyclerTypes);
@@ -221,7 +225,7 @@ public class TypeListActivity extends AppCompatActivity {
     }
 
     public void undoPoiTypeRemoval() {
-        typesAdapter.undoLastRemoval();
+//        typesAdapter.undoLastRemoval();
     }
 
     public void undoPoiTypeTagRemoval() {
@@ -229,12 +233,12 @@ public class TypeListActivity extends AppCompatActivity {
     }
 
     public void notifyPoiTypeDefinitivelyRemoved(PoiType poiType) {
-        typesAdapter.notifyLastRemovalDone(poiType);
+//        typesAdapter.notifyLastRemovalDone(poiType);
     }
 
     public void notifyPoiTagDefinitivelyRemoved(PoiTypeTag poiTypeTag) {
         tagsAdapter.notifyLastRemovalDone(poiTypeTag);
-        typesAdapter.notifyTagRemoved(poiTypeTag);
+//        typesAdapter.notifyTagRemoved(poiTypeTag);
     }
 
     public PoiType getPoiTypeById(Long id) {
@@ -249,6 +253,10 @@ public class TypeListActivity extends AppCompatActivity {
         tagsAdapter.addItem(item);
     }
 
+    public void setTypeSuggestions(List<SuggestionsData> suggestions) {
+        typesAdapter.setSuggestions(suggestions);
+    }
+
     private void changeTitle(int title, CharSequence subtitle) {
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
@@ -260,70 +268,77 @@ public class TypeListActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_type_list, menu);
+        mSearchAction = menu.findItem(R.id.action_search);
         return true;
     }
 
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        mSearchAction = menu.findItem(R.id.action_search);
-        return super.onPrepareOptionsMenu(menu);
-    }
-
-
     protected void handleMenuSearch() {
         ActionBar action = getSupportActionBar();
+        if (action == null) {
+            return;
+        }
 
-        if (isSearchOpened) {
+        boolean wasSearching = isSearchOpened;
+        int iconRes;
 
-            action.setDisplayShowCustomEnabled(false); //disable a custom view inside the actionbar
-            action.setDisplayShowTitleEnabled(true); //show the title in the action bar
+        action.setDisplayShowCustomEnabled(!wasSearching);
+        action.setDisplayShowTitleEnabled(wasSearching);
 
-            //hides the keyboard
-            View view = this.getCurrentFocus();
-            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        if (wasSearching) {
+            hideIME();
+            typesAdapter.setSearchFilter(null);
 
-            //add the search icon in the action bar
-            mSearchAction.setIcon(getResources().getDrawable(R.drawable.abc_ic_search_api_mtrl_alpha));
+            iconRes = R.drawable.abc_ic_search_api_mtrl_alpha;
+        } else {
+            action.setCustomView(R.layout.search_bar);
 
-            isSearchOpened = false;
-        } else { //open the search entry
-
-            action.setDisplayShowCustomEnabled(true); //enable it to display a
-            // custom view in the action bar.
-            action.setCustomView(R.layout.search_bar); //add the custom view
-            action.setDisplayShowTitleEnabled(false); //hide the title
-
-            edtSeach = (EditText) action.getCustomView().findViewById(R.id.edtSearch);
-
-            edtSeach.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            EditText search = (EditText) action.getCustomView().findViewById(R.id.edtSearch);
+            search.setOnEditorActionListener(new TextView.OnEditorActionListener() {
                 @Override
                 public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                     if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                        doSearch();
+                        hideIME();
                         return true;
                     }
                     return false;
                 }
             });
+            search.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                }
 
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    String search = s.toString();
+                    presenter.queryTypeSuggestions(search);
+                    typesAdapter.setSearchFilter(search);
+                }
 
-            edtSeach.requestFocus();
+                @Override
+                public void afterTextChanged(Editable s) {
+                }
+            });
+            search.requestFocus();
 
-            //open the keyboard focused in the edtSearch
+            // Open the keyboard focused on the edit text
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.showSoftInput(edtSeach, InputMethodManager.SHOW_IMPLICIT);
+            imm.showSoftInput(search, InputMethodManager.SHOW_IMPLICIT);
 
-
-            //add the close icon
-            mSearchAction.setIcon(getResources().getDrawable(R.drawable.abc_ic_clear_mtrl_alpha));
-
-            isSearchOpened = true;
+            iconRes = R.drawable.abc_ic_clear_mtrl_alpha;
         }
+
+        // Update the search menu icon in the action bar
+        mSearchAction.setIcon(getResources().getDrawable(iconRes));
+        isSearchOpened = !wasSearching;
     }
 
-    private void doSearch() {
-//
+    private void hideIME() {
+        View view = getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
     }
 }
 

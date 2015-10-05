@@ -18,7 +18,6 @@
  */
 package io.mapsquare.osmcontributor.type;
 
-import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.view.View.OnClickListener;
 
@@ -47,7 +46,9 @@ import io.mapsquare.osmcontributor.type.event.PoiTagDeletedEvent;
 import io.mapsquare.osmcontributor.type.event.PoiTypeCreatedEvent;
 import io.mapsquare.osmcontributor.type.event.PoiTypeDeletedEvent;
 import io.mapsquare.osmcontributor.type.event.PoiTypeSuggestedDownloadedEvent;
+import io.mapsquare.osmcontributor.type.event.TypeSuggestionsDownloadedEvent;
 import io.mapsquare.osmcontributor.type.rest.OsmTagInfoRestClient;
+import io.mapsquare.osmcontributor.utils.EventCountDownTimer;
 import io.mapsquare.osmcontributor.utils.StringUtils;
 import timber.log.Timber;
 
@@ -55,9 +56,13 @@ import timber.log.Timber;
 @Singleton
 public class TypeManager {
 
+    private static final int SUGGESTIONS_PER_PAGE = 5;
+    private static final int SUGGESTIONS_DELAY = 1000;
+
     private EventBus bus;
     private PoiManager poiManager;
     private OsmTagInfoRestClient tagInfoRestClient;
+    private EventCountDownTimer suggestionsTimer;
 
     private final Object lock = new Object();
     private Snackbar lastSnackBar;
@@ -72,6 +77,7 @@ public class TypeManager {
         this.bus = bus;
         this.poiManager = poiManager;
         this.tagInfoRestClient = tagInfoRestClient;
+        suggestionsTimer = new EventCountDownTimer(SUGGESTIONS_DELAY, SUGGESTIONS_DELAY, bus);
     }
 
     // ********************************
@@ -106,6 +112,11 @@ public class TypeManager {
         poiManager.savePoiType(poiType);
         Timber.i("Removed poi tag %d", poiTypeTag.getId());
         bus.post(new PoiTagDeletedEvent(poiTypeTag));
+    }
+
+    public void onEventBackgroundThread(InternalDownloadTypeSuggestionsEvent event) {
+        Suggestions result = tagInfoRestClient.getSuggestions(event.getQuery(), event.getPage(), SUGGESTIONS_PER_PAGE);
+        bus.post(new TypeSuggestionsDownloadedEvent(result));
     }
 
     public void onEventBackgroundThread(PleaseDownloadPoiTypeSuggestionEvent event) {
@@ -185,19 +196,18 @@ public class TypeManager {
     }
 
     /**
-     * Return poiTypes Suggestions for a given query.
+     * Request POI types suggestions for a given search query.
+     * <br/>
+     * A {@link TypeSuggestionsDownloadedEvent} will be posted to the event bus once suggestions
+     * are downloaded.
      *
-     * @param query          The query.
-     * @param page           The page number.
-     * @param resultsPerPage The number of results per page.
-     * @return The suggestions.
+     * @param query The query.
+     * @param page  The page number.
      */
-    @Nullable
-    public Suggestions getSuggestionsBlocking(String query, Integer page, Integer resultsPerPage) {
-        if (!StringUtils.isEmpty(query)) {
-            return tagInfoRestClient.getSuggestions(query, page, resultsPerPage);
-        }
-        return null;
+    public void querySuggestions(String query, Integer page) {
+        suggestionsTimer.cancel();
+        suggestionsTimer.setEvent(new InternalDownloadTypeSuggestionsEvent(query, page));
+        suggestionsTimer.start();
     }
 
     // *********************************
@@ -342,6 +352,25 @@ public class TypeManager {
     private class InternalRemovePoiTagEvent extends BasePoiTagEvent implements DeletionTask {
         public InternalRemovePoiTagEvent(PoiTypeTag poiTypeTag) {
             super(poiTypeTag);
+        }
+    }
+
+    private class InternalDownloadTypeSuggestionsEvent {
+
+        private final String query;
+        private final Integer page;
+
+        public InternalDownloadTypeSuggestionsEvent(String query, Integer page) {
+            this.query = query;
+            this.page = page;
+        }
+
+        public String getQuery() {
+            return query;
+        }
+
+        public Integer getPage() {
+            return page;
         }
     }
 }

@@ -37,6 +37,10 @@
     <color name="material_green_500">#4CAF50</color>
     <color name="material_green_700">#388E3C</color>
 
+    <!-- Toolbar search -->
+    <color name="toolbar_control">#ffffffff</color>
+    <color name="toolbar_search_accent">#ffeeeeee</color>
+
     <!-- Drag/Swipe list -->
     <color name="list_divider">#e5e5e5</color>
     <color name="list_item_bg">#ffffffff</color>

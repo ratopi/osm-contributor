@@ -37,12 +37,14 @@ import io.mapsquare.osmcontributor.core.database.DatabaseHelper;
 import io.mapsquare.osmcontributor.core.model.PoiType;
 import io.mapsquare.osmcontributor.core.model.PoiTypeTag;
 import io.mapsquare.osmcontributor.type.adapter.DragSwipeRecyclerAdapter;
+import io.mapsquare.osmcontributor.type.dto.SuggestionsData;
 import io.mapsquare.osmcontributor.type.event.PleaseSavePoiTag;
 import io.mapsquare.osmcontributor.type.event.PleaseSavePoiType;
 import io.mapsquare.osmcontributor.type.event.PoiTagCreatedEvent;
 import io.mapsquare.osmcontributor.type.event.PoiTagDeletedEvent;
 import io.mapsquare.osmcontributor.type.event.PoiTypeCreatedEvent;
 import io.mapsquare.osmcontributor.type.event.PoiTypeDeletedEvent;
+import io.mapsquare.osmcontributor.type.event.TypeSuggestionsDownloadedEvent;
 import timber.log.Timber;
 
 public class TypeListActivityPresenter {
@@ -288,6 +290,15 @@ public class TypeListActivityPresenter {
         poiType.setName(name);
         poiType.setIcon(name);
         typeManager.savePoiType(poiType);
+    }
+
+    public void queryTypeSuggestions(String search) {
+        typeManager.querySuggestions(search, 1);
+    }
+
+    public void onEventMainThread(TypeSuggestionsDownloadedEvent event) {
+        List<SuggestionsData> suggestions = event.getSuggestions().getData();
+        typeListActivity.setTypeSuggestions(suggestions);
     }
 
     public void onEventMainThread(PleaseSavePoiTag event) {

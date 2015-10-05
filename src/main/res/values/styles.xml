@@ -64,4 +64,9 @@
         <item name="android:shadowColor">#000000</item>
         <item name="android:shadowRadius">20</item>
     </style>
+
+    <style name="ActionBar.SearchText" parent="">
+        <item name="android:textColorPrimary">@color/toolbar_control</item>
+        <item name="colorAccent">@color/toolbar_search_accent</item>
+    </style>
 </resources>

@@ -116,7 +116,7 @@ public class SuggestionAdapter extends BaseAdapter implements Filterable {
             }
 
             String query = constraint.toString().trim();
-            Suggestions suggestions = typeManager.getSuggestionsBlocking(query, 1, MAX_RESULTS);
+            Suggestions suggestions = null; //typeManager.getSuggestionsBlocking(query, 1, MAX_RESULTS);
             List values = suggestions != null ? suggestions.getData() : Collections.EMPTY_LIST;
 
             FilterResults results = new FilterResults();
