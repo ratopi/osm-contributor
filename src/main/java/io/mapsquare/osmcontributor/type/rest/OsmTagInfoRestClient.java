@@ -36,7 +36,7 @@ public interface OsmTagInfoRestClient {
      * @param resultPerPage The number of results per page, if null return all the results.
      * @return The suggestions for the given query.
      */
-    @GET("/keys/all?qtype=key&sortname=count_ways&filter=characters_plain")
+    @GET("/keys/all?qtype=key&sortname=count_ways&filter=characters_plain&sortorder=desc")
     Suggestions getSuggestions(@Query("query") String query, @Query("page") Integer pageNumber, @Query("rp") Integer resultPerPage);
 
     /**
