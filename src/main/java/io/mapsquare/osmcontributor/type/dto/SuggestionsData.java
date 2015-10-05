@@ -18,9 +18,12 @@
  */
 package io.mapsquare.osmcontributor.type.dto;
 
+import android.support.annotation.NonNull;
+
 import com.google.gson.annotations.SerializedName;
 
-public class SuggestionsData {
+public class SuggestionsData implements Comparable<SuggestionsData> {
+
     String key;
     @SerializedName("in_wiki")
     boolean inWiki;
@@ -48,5 +51,10 @@ public class SuggestionsData {
         sb.append(", inWiki=").append(inWiki);
         sb.append('}');
         return sb.toString();
+    }
+
+    @Override
+    public int compareTo(@NonNull SuggestionsData another) {
+        return key != null ? key.compareTo(another.key) : 0;
     }
 }

@@ -52,6 +52,9 @@ public class ItemDividerDecoration extends RecyclerView.ItemDecoration {
             if (child.getVisibility() != View.VISIBLE || nextChild.getVisibility() != View.VISIBLE) {
                 continue;
             }
+            if (!child.isEnabled() || !nextChild.isEnabled()) {
+                continue;
+            }
 
             // check if the next item is placed at the bottom
             float childBottom = child.getBottom() + ViewCompat.getTranslationY(child);

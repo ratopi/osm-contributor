@@ -24,7 +24,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="@dimen/list_item_height"
-    android:background="@color/list_item_bg"
     android:gravity="center_vertical"
     android:orientation="horizontal">
 
@@ -47,11 +46,13 @@
         tools:text="Bus stop"/>
 
     <ImageView
+        android:id="@+id/download"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_gravity="center_vertical"
         android:layout_margin="8dp"
         android:background="?selectableItemBackgroundBorderless"
+        android:clickable="true"
         android:scaleType="center"
         android:src="@drawable/entrance"/>
 

@@ -187,7 +187,7 @@ public class TypeListActivity extends AppCompatActivity {
         }
     }
 
-    void showTypes(Collection<PoiType> poiTypes) {
+    void showTypes(List<PoiType> poiTypes) {
         showingTypes = true;
 
         typesAdapter.setTypes(poiTypes);
