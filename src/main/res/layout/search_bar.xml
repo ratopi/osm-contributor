@@ -19,7 +19,7 @@
     along with OSM Contributor.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<FrameLayout
+<io.mapsquare.osmcontributor.type.SearchView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
@@ -41,4 +41,4 @@
         android:background="?selectableItemBackgroundBorderless"
         android:src="@drawable/close"/>
 
-</FrameLayout>
+</io.mapsquare.osmcontributor.type.SearchView>

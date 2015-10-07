@@ -25,7 +25,6 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
-import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -48,27 +47,33 @@ public class SearchView extends FrameLayout implements MenuItemCompat.OnActionEx
 
     public SearchView(Context context) {
         super(context);
-        init(context);
     }
 
     public SearchView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init(context);
     }
 
     public SearchView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init(context);
     }
 
-    private void init(Context context) {
+    @Override
+    protected void onFinishInflate() {
+        super.onFinishInflate();
+
+        searchText = (EditText) findViewById(R.id.search_text);
+        if (searchText == null) {
+            throw new NullPointerException("search_text not found in the layout");
+        }
+
+        searchClear = findViewById(R.id.search_delete);
+        if (searchClear == null) {
+            throw new NullPointerException("search_delete not found in the layout");
+        }
+
         searchWatcher = new SearchWatcher();
         iconified = true;
 
-        LayoutInflater inflater = LayoutInflater.from(context);
-        inflater.inflate(R.layout.search_bar, this, true);
-
-        searchText = (EditText) findViewById(R.id.search_text);
         searchText.addTextChangedListener(searchWatcher);
         searchText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
@@ -81,7 +86,6 @@ public class SearchView extends FrameLayout implements MenuItemCompat.OnActionEx
             }
         });
 
-        searchClear = findViewById(R.id.search_delete);
         searchClear.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -89,7 +93,7 @@ public class SearchView extends FrameLayout implements MenuItemCompat.OnActionEx
             }
         });
 
-//        setFocusable(true);
+        setFocusable(true);
     }
 
     public void setOnSearchListener(OnSearchListener l) {
@@ -159,17 +163,21 @@ public class SearchView extends FrameLayout implements MenuItemCompat.OnActionEx
     public boolean requestFocus(int direction, Rect previouslyFocusedRect) {
         // Don't accept focus if in the middle of clearing focus
         if (clearingFocus) {
+            Timber.w("request focus ignored: clearing focus");
             return false;
         }
         // Check if SearchView is focusable.
         if (!isFocusable()) {
+            Timber.w("request focus ignored: not focusable");
             return false;
         }
         // If it is not iconified, then give the focus to the text field
         if (!iconified) {
+            Timber.w("request focus");
             setImeVisibility(true);
             return searchText.requestFocus(direction, previouslyFocusedRect);
         } else {
+            Timber.w("request focus ignored: iconified");
             return super.requestFocus(direction, previouslyFocusedRect);
         }
     }
