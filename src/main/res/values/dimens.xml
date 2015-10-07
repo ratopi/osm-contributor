@@ -36,4 +36,8 @@
     <!-- Floating action button -->
     <dimen name="fab_margin">12dp</dimen>
 
+    <!-- Search view in toolbar -->
+    <dimen name="toolbar_search_preferred_width">240dp</dimen>
+    <dimen name="toolbar_search_end_padding">24dp</dimen>
+
 </resources>

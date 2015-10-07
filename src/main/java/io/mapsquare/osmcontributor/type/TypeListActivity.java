@@ -18,27 +18,19 @@
  */
 package io.mapsquare.osmcontributor.type;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 import android.widget.ViewSwitcher;
 
 import java.util.Collection;
@@ -61,7 +53,7 @@ import io.mapsquare.osmcontributor.type.adapter.PoiTypeTagAdapter;
 import io.mapsquare.osmcontributor.type.dto.SuggestionsData;
 import timber.log.Timber;
 
-public class TypeListActivity extends AppCompatActivity {
+public class TypeListActivity extends AppCompatActivity implements SearchView.OnSearchListener {
 
     @InjectView(R.id.toolbar)
     Toolbar toolbar;
@@ -99,7 +91,7 @@ public class TypeListActivity extends AppCompatActivity {
     private DragSwipeRecyclerHelper tagsHelper;
     private PoiTypeTagAdapter tagsAdapter;
 
-    private MenuItem mSearchAction;
+    private MenuItem searchMenu;
     private boolean isSearchOpened = false;
 
     @Override
@@ -159,9 +151,6 @@ public class TypeListActivity extends AppCompatActivity {
         if (item.getItemId() == android.R.id.home) {
             onBackPressed();
             return true;
-        } else if (item.getItemId() == R.id.action_search) {
-            handleMenuSearch();
-            return true;
         } else {
             return super.onOptionsItemSelected(item);
         }
@@ -170,7 +159,7 @@ public class TypeListActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         if (isSearchOpened) {
-            handleMenuSearch();
+            MenuItemCompat.collapseActionView(searchMenu);
         } else if (!presenter.onBackPressed()) {
             eventBus.post(new PleaseLoadPoiTypes());
             super.onBackPressed();
@@ -268,77 +257,93 @@ public class TypeListActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_type_list, menu);
-        mSearchAction = menu.findItem(R.id.action_search);
+
+        searchMenu = menu.findItem(R.id.action_search);
+        SearchView searchView = (SearchView) searchMenu.getActionView();
+        MenuItemCompat.setOnActionExpandListener(searchMenu, searchView);
+        searchView.setOnSearchListener(this);
+
+//        if (viewSwitcher.isLastViewShown()) {
+//            searchView.setSearchQuery(searchQuery);
+//            searchMenu.expandActionView();
+//        }
+
         return true;
     }
 
-    protected void handleMenuSearch() {
-        ActionBar action = getSupportActionBar();
-        if (action == null) {
-            return;
-        }
+//    protected void handleMenuSearch() {
+//        ActionBar action = getSupportActionBar();
+//        if (action == null) {
+//            return;
+//        }
+//
+//        boolean wasSearching = isSearchOpened;
+//        int iconRes;
+//
+//        action.setDisplayShowCustomEnabled(!wasSearching);
+//        action.setDisplayShowTitleEnabled(wasSearching);
+//
+//        if (wasSearching) {
+//            hideIME();
+//            typesAdapter.setSearchFilter(null);
+//
+//            iconRes = R.drawable.abc_ic_search_api_mtrl_alpha;
+//        } else {
+//            action.setCustomView(R.layout.search_bar);
+//
+//            EditText search = (EditText) action.getCustomView().findViewById(R.id.edtSearch);
+//            search.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+//                @Override
+//                public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+//                    if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+//                        hideIME();
+//                        return true;
+//                    }
+//                    return false;
+//                }
+//            });
+//            search.addTextChangedListener(new TextWatcher() {
+//                @Override
+//                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+//                }
+//
+//                @Override
+//                public void onTextChanged(CharSequence s, int start, int before, int count) {
+//                    String search = s.toString();
+//                    presenter.queryTypeSuggestions(search);
+//                    typesAdapter.setSearchFilter(search);
+//                }
+//
+//                @Override
+//                public void afterTextChanged(Editable s) {
+//                }
+//            });
+//            search.requestFocus();
+//
+//            // Open the keyboard focused on the edit text
+//            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+//            imm.showSoftInput(search, InputMethodManager.SHOW_IMPLICIT);
+//
+//            iconRes = R.drawable.abc_ic_clear_mtrl_alpha;
+//        }
+//
+//        // Update the search menu icon in the action bar
+//        mSearchAction.setIcon(getResources().getDrawable(iconRes));
+//        isSearchOpened = !wasSearching;
+//    }
 
-        boolean wasSearching = isSearchOpened;
-        int iconRes;
-
-        action.setDisplayShowCustomEnabled(!wasSearching);
-        action.setDisplayShowTitleEnabled(wasSearching);
-
-        if (wasSearching) {
-            hideIME();
-            typesAdapter.setSearchFilter(null);
-
-            iconRes = R.drawable.abc_ic_search_api_mtrl_alpha;
-        } else {
-            action.setCustomView(R.layout.search_bar);
-
-            EditText search = (EditText) action.getCustomView().findViewById(R.id.edtSearch);
-            search.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-                @Override
-                public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                    if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                        hideIME();
-                        return true;
-                    }
-                    return false;
-                }
-            });
-            search.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                }
-
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    String search = s.toString();
-                    presenter.queryTypeSuggestions(search);
-                    typesAdapter.setSearchFilter(search);
-                }
-
-                @Override
-                public void afterTextChanged(Editable s) {
-                }
-            });
-            search.requestFocus();
-
-            // Open the keyboard focused on the edit text
-            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.showSoftInput(search, InputMethodManager.SHOW_IMPLICIT);
-
-            iconRes = R.drawable.abc_ic_clear_mtrl_alpha;
-        }
-
-        // Update the search menu icon in the action bar
-        mSearchAction.setIcon(getResources().getDrawable(iconRes));
-        isSearchOpened = !wasSearching;
+    @Override
+    public void onSearchChanged(String search) {
+        typesAdapter.setSearchFilter(search);
+        presenter.queryTypeSuggestions(search);
     }
 
-    private void hideIME() {
-        View view = getCurrentFocus();
-        if (view != null) {
-            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+    @Override
+    public void onSearchStateChanged(boolean started) {
+        if (!started) {
+            typesAdapter.setSearchFilter(null);
         }
+        isSearchOpened = started;
     }
 }
 

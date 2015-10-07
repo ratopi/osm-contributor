@@ -25,11 +25,20 @@
     android:layout_height="wrap_content">
 
     <EditText
-        android:id="@+id/edtSearch"
-        android:layout_width="240dp"
+        android:id="@+id/search_text"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:imeOptions="actionSearch"
         android:inputType="textNoSuggestions"
+        android:paddingRight="@dimen/toolbar_search_end_padding"
         android:theme="@style/ActionBar.SearchText"/>
+
+    <ImageView
+        android:id="@+id/search_delete"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical|right"
+        android:background="?selectableItemBackgroundBorderless"
+        android:src="@drawable/close"/>
 
 </FrameLayout>
