@@ -361,11 +361,6 @@ public class MapFragment extends Fragment {
         mapboxMap.setMyLocationEnabled(false);
     }
 
-    private void drawBounds() {
-//        BoxOverlay boxOverlay = new BoxOverlay(configManager.getLatLngBounds());
-//        mapView.addOverlay(boxOverlay);
-    }
-
     private void measureMaxPoiType() {
         DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
 
@@ -450,7 +445,6 @@ public class MapFragment extends Fragment {
         outState.putDouble(LEVEL, currentLevel);
         outState.putBoolean(DISPLAY_OPEN_NOTES, displayOpenNotes);
         outState.putBoolean(DISPLAY_CLOSED_NOTES, displayClosedNotes);
-//        outState.putString(TILE_SOURCE, currentTileLayer);
 
         int markerType = markerSelected == null ? LocationMarker.MarkerType.NONE.ordinal() : markerSelected.getType().ordinal();
         outState.putInt(MARKER_TYPE, markerType);
@@ -527,8 +521,6 @@ public class MapFragment extends Fragment {
         if (pleaseSwitchToPoiSelected) {
             pleaseSwitchToPoiSelected = false;
             mapboxListener.onMarkerClick(markerSelected);
-        } else {
-            //switchMode(mapMode);
         }
     }
 
@@ -705,12 +697,6 @@ public class MapFragment extends Fragment {
 
         // If there must be a min zoom, take zoom vectorial
         // If there is no need for a zoom min, take the zoom min of the current TileProvider.
-        /**
-         * TODO
-         */
-//        mapboxMap.setMinZoom(properties.isZoomOutLimited() ? zoomVectorial : mapboxMap.getTileProvider().getMinimumZoomLevel());
-//        mapboxMap.setMinZoom(zoomVectorial);
-
         tracker.send(new HitBuilders.EventBuilder()
                 .setCategory(Category.MapMode.getValue())
                 .setAction(properties.getAnalyticsAction())

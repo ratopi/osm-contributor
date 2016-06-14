@@ -20,7 +20,6 @@ package io.mapsquare.osmcontributor.ui.listeners;
 
 import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
-import android.util.Log;
 import android.view.View;
 
 import com.mapbox.mapboxsdk.annotations.IconFactory;
@@ -85,14 +84,14 @@ public class MapboxListener {
             }
         });
 
-        // Listen on location and zoom change
+        // Listen on location and zoom changes
         mapboxMap.setOnCameraChangeListener(new MapboxMap.OnCameraChangeListener() {
             @Override
             public void onCameraChange(CameraPosition position) {
                 // Location change, call the listener method
                 if (MapboxListener.this.position != null) {
                     if (!MapboxListener.this.position.target.equals(position.target)) {
-                        onLocationChange(position.target);
+                        onCameraPositionChange(position.target);
                     }
 
                     // Zoom change, call the listener method
@@ -104,19 +103,13 @@ public class MapboxListener {
                 MapboxListener.this.position = position;
             }
         });
-
-        mapboxMap.setOnCameraChangeListener(new MapboxMap.OnCameraChangeListener() {
-            @Override
-            public void onCameraChange(CameraPosition position) {
-                onCameraPositionChange();
-            }
-        });
     }
 
     /**
      * The camera position change
+     * @param target
      */
-    private void onCameraPositionChange() {
+    private void onCameraPositionChange(LatLng target) {
         if (mapFragment.getMapMode().equals(MapMode.NODE_REF_POSITION_EDITION)) {
             mapFragment.onCameraChangeUpdatePolyline();
         }
@@ -126,6 +119,7 @@ public class MapboxListener {
      * The zoom change
      * @param zoom
      */
+    private static final String TAG = "MapboxListener";
     private void onZoomChange(double zoom) {
         // For testing purpose
         mapFragment.setZoomLevelText(df.format(zoom));
@@ -154,11 +148,6 @@ public class MapboxListener {
                 mapFragment.applyNoteFilter();
             }
         }
-    }
-
-
-    private void onLocationChange(LatLng location) {
-
     }
 
     /**
@@ -190,7 +179,6 @@ public class MapboxListener {
         if (mapMode != MapMode.POI_POSITION_EDITION && mapMode != MapMode.POI_CREATION && !mapFragment.isTuto()) {
             mapFragment.unselectIcon();
             mapFragment.setMarkerSelected(locationMarker);
-            Log.i(MapboxListener.class.getSimpleName(), "onMarkerClick: selected " + locationMarker.getRelatedObject());
             switch (locationMarker.getType()) {
                 case POI:
                     onPoiMarkerClick(locationMarker);
@@ -243,7 +231,6 @@ public class MapboxListener {
      * @param marker
      */
     public void onNodeRefMarkerClick(LocationMarker<PoiNodeRef> marker) {
-        Log.i(MapboxListener.class.getSimpleName(), "onNodeRefMarkerClick: ");
         mapFragment.selectNodeRefMarker();
     }
 }
